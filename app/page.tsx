@@ -101,7 +101,7 @@ export default function Dashboard() {
   const d = data || {};
   const cm = d.currentMonth || {};
 
-  const profit = (Number(cm.revenue) || 0) - (Number(cm.expenses) || 0);
+  const profit = (Number(cm.revenue) || 0) - (Number(cm.expenses) || 0) - (Number(cm.purchases) || 0);
   const profitMargin = Number(cm.revenue) > 0 ? (profit / Number(cm.revenue)) * 100 : 0;
 
   return (

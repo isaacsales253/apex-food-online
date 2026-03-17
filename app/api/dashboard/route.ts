@@ -12,30 +12,48 @@ function toDateFilter(period: string, value: string) {
     const day = value || today;
     const prev = new Date(day + 'T12:00:00');
     prev.setDate(prev.getDate() - 1);
+    const prevDay = prev.toISOString().split('T')[0];
+    const nextDay = new Date(day + 'T12:00:00');
+    nextDay.setDate(nextDay.getDate() + 1);
     return {
       filterPrefix: day,
-      prevFilterPrefix: prev.toISOString().split('T')[0],
+      prevFilterPrefix: prevDay,
       periodLabel: day,
       filterType: 'day' as const,
+      tsStart: `${day}T00:00:00`,
+      tsEnd: `${nextDay.toISOString().split('T')[0]}T00:00:00`,
+      prevTsStart: `${prevDay}T00:00:00`,
+      prevTsEnd: `${day}T00:00:00`,
     };
   } else if (period === 'year') {
     const yr = value || currentYear;
+    const prevYr = String(parseInt(yr) - 1);
     return {
       filterPrefix: yr,
-      prevFilterPrefix: String(parseInt(yr) - 1),
+      prevFilterPrefix: prevYr,
       periodLabel: yr,
       filterType: 'year' as const,
+      tsStart: `${yr}-01-01T00:00:00`,
+      tsEnd: `${parseInt(yr) + 1}-01-01T00:00:00`,
+      prevTsStart: `${prevYr}-01-01T00:00:00`,
+      prevTsEnd: `${yr}-01-01T00:00:00`,
     };
   } else {
     const mo = value || currentMonth;
     const [y, m] = mo.split('-').map(Number);
     const prevDate = new Date(y, m - 2, 1);
     const prevMo = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    const nextDate = new Date(y, m, 1);
+    const nextMo = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`;
     return {
       filterPrefix: mo,
       prevFilterPrefix: prevMo,
       periodLabel: mo,
       filterType: 'month' as const,
+      tsStart: `${mo}-01T00:00:00`,
+      tsEnd: `${nextMo}-01T00:00:00`,
+      prevTsStart: `${prevMo}-01T00:00:00`,
+      prevTsEnd: `${mo}-01T00:00:00`,
     };
   }
 }
@@ -47,7 +65,7 @@ export async function GET(req: NextRequest) {
     const value = searchParams.get('value') || '';
     const today = new Date().toISOString().split('T')[0];
 
-    const { filterPrefix, prevFilterPrefix, periodLabel } = toDateFilter(period, value);
+    const { filterPrefix, prevFilterPrefix, periodLabel, tsStart, tsEnd, prevTsStart, prevTsEnd } = toDateFilter(period, value);
 
     // Parallel queries
     const [
@@ -67,9 +85,9 @@ export async function GET(req: NextRequest) {
     ] = await Promise.all([
       supabase.from('sales').select('total_revenue, total_profit').ilike('sale_date', `${filterPrefix}%`),
       supabase.from('sales').select('total_revenue').ilike('sale_date', `${prevFilterPrefix}%`),
-      supabase.from('expenses').select('value').ilike('created_at', `${filterPrefix}%`).is('shopping_session_id', null),
-      supabase.from('expenses').select('value').ilike('created_at', `${prevFilterPrefix}%`).is('shopping_session_id', null),
-      supabase.from('shopping_sessions').select('total_cost').ilike('date', `${filterPrefix}%`),
+      supabase.from('expenses').select('value').gte('created_at', tsStart).lt('created_at', tsEnd).is('shopping_session_id', null),
+      supabase.from('expenses').select('value').gte('created_at', prevTsStart).lt('created_at', prevTsEnd).is('shopping_session_id', null),
+      supabase.from('shopping_sessions').select('total_cost').gte('date', tsStart).lt('date', tsEnd),
       supabase.from('expenses').select('value').eq('paid', false).is('shopping_session_id', null),
       supabase.from('expenses').select('id, name, value, due_date, supplier_id').eq('paid', false).not('due_date', 'is', null).lt('due_date', today).is('shopping_session_id', null).order('due_date').limit(10),
       supabase.from('raw_materials').select('stock_quantity, purchase_price').gt('stock_quantity', 0),
@@ -85,7 +103,7 @@ export async function GET(req: NextRequest) {
       supabase.from('sales').select('meal_name, quantity, total_revenue, total_profit'),
       supabase.from('sales').select('channel, total_revenue, total_profit').ilike('sale_date', `${filterPrefix}%`),
       supabase.from('sales').select('channel, total_revenue, total_profit'),
-      supabase.from('expenses').select('category, value, paid').ilike('created_at', `${filterPrefix}%`).is('shopping_session_id', null),
+      supabase.from('expenses').select('category, value, paid').gte('created_at', tsStart).lt('created_at', tsEnd).is('shopping_session_id', null),
       supabase.from('expenses').select('category, value, paid').is('shopping_session_id', null),
       supabase.from('shopping_session_items').select('supplier_id, session_id, raw_material_id, total_price').not('supplier_id', 'is', null),
       supabase.from('raw_materials').select('id, name, stock_quantity, min_stock, purchase_unit, purchase_price').gt('min_stock', 0),
@@ -97,7 +115,7 @@ export async function GET(req: NextRequest) {
       supabase.from('technical_sheet_ingredients').select('*'),
       supabase.from('raw_materials').select('*'),
       supabase.from('technical_sheets').select('*'),
-      supabase.from('expenses').select('value').eq('category', 'Mão de Obra').ilike('created_at', `${filterPrefix}%`),
+      supabase.from('expenses').select('value').eq('category', 'Mão de Obra').gte('created_at', tsStart).lt('created_at', tsEnd),
     ]);
 
     // ── Revenue ───────────────────────────────────────────────────────────────
