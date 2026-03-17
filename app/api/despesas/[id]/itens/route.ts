@@ -11,17 +11,24 @@ export async function GET(
     const { id } = await params;
     const { data: expense } = await supabase
       .from('expenses')
-      .select('shopping_session_id')
+      .select('shopping_session_id, supplier_id')
       .eq('id', id)
       .single();
 
     if (!expense?.shopping_session_id) return NextResponse.json([]);
 
-    const { data: items, error } = await supabase
+    let query = supabase
       .from('shopping_session_items')
-      .select('id, raw_material_id, brand, quantity, unit_price, total_price, raw_materials(name, purchase_unit), suppliers(name)')
+      .select('id, raw_material_id, brand, quantity, unit_price, total_price, supplier_id, raw_materials(name, purchase_unit), suppliers(name)')
       .eq('session_id', expense.shopping_session_id)
       .order('raw_material_id');
+
+    // Filter by supplier if expense belongs to a specific supplier
+    if (expense.supplier_id) {
+      query = query.eq('supplier_id', expense.supplier_id);
+    }
+
+    const { data: items, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -53,7 +60,7 @@ export async function PUT(
 
     const { data: expense } = await supabase
       .from('expenses')
-      .select('shopping_session_id')
+      .select('shopping_session_id, supplier_id')
       .eq('id', id)
       .single();
 
@@ -115,17 +122,32 @@ export async function PUT(
       }
     }
 
-    // Recalculate session and expense totals
-    const { data: sessionItems } = await supabase
+    // Recalculate total only for THIS expense's supplier items
+    let totalQuery = supabase
       .from('shopping_session_items')
       .select('total_price')
       .eq('session_id', sessionId);
 
-    const newTotal = (sessionItems || []).reduce((a: number, r: any) => a + r.total_price, 0);
-    await supabase.from('shopping_sessions').update({ total_cost: newTotal }).eq('id', sessionId);
-    await supabase.from('expenses').update({ value: newTotal }).eq('id', id);
+    if (expense.supplier_id) {
+      totalQuery = totalQuery.eq('supplier_id', expense.supplier_id);
+    }
 
-    return NextResponse.json({ success: true, newTotal });
+    const { data: supplierItems } = await totalQuery;
+    const newExpenseTotal = (supplierItems || []).reduce((a: number, r: any) => a + r.total_price, 0);
+
+    // Update this expense with its own supplier's total
+    await supabase.from('expenses').update({ value: newExpenseTotal }).eq('id', id);
+
+    // Update session total_cost with ALL items
+    const { data: allSessionItems } = await supabase
+      .from('shopping_session_items')
+      .select('total_price')
+      .eq('session_id', sessionId);
+
+    const sessionTotal = (allSessionItems || []).reduce((a: number, r: any) => a + r.total_price, 0);
+    await supabase.from('shopping_sessions').update({ total_cost: sessionTotal }).eq('id', sessionId);
+
+    return NextResponse.json({ success: true, newTotal: newExpenseTotal });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Erro ao atualizar itens' }, { status: 500 });
