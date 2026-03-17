@@ -110,10 +110,9 @@
 
   /* ── Responsive main content layout ── */
   .main-content {
-    /* Mobile/Tablet: full width, top padding to clear the mobile header */
-    @apply w-full px-4 pt-[4.5rem] pb-8;
-    /* Desktop: offset for sidebar (18rem wide + 1.5rem margin) */
-    @apply lg:ml-72 lg:w-[calc(100%-18rem)] lg:px-8 lg:pt-8 lg:pb-8;
+    /* Mobile/Tablet: full width, top padding to clear mobile header (56px) */
+    @apply w-full px-4 pb-8;
+    padding-top: 4.5rem;
   }
 
   /* ── Form alignment helpers ── */
@@ -127,6 +126,15 @@
 
   .field-label {
     @apply text-xs font-bold uppercase tracking-wider text-muted;
+  }
+}
+
+/* ── Desktop layout: sidebar offset ── */
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: 18rem;       /* same as ml-72 */
+    width: calc(100% - 18rem);
+    padding: 2rem;            /* same as p-8 */
   }
 }
 
