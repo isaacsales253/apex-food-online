@@ -61,7 +61,7 @@ export default function ListaComprasPage() {
       const deficit = m.min_stock - (m.stock_quantity ?? 0);
       const price = m.last_purchase_price || m.purchase_price;
       if (!next[m.id] || next[m.id].length === 0) {
-        next[m.id] = [{ id: Math.random().toString(), supplier_id: '', brand: '', quantity: parseFloat(deficit.toFixed(3)), unit_price: price }];
+        next[m.id] = [{ id: Math.random().toString(), supplier_id: '', brand: '', quantity: Math.round(deficit), unit_price: price }];
       }
     });
     setCart(next);
@@ -155,9 +155,9 @@ export default function ListaComprasPage() {
              raw_material_id,
              supplier_id: line.supplier_id === '' ? null : parseInt(line.supplier_id.toString()),
              brand: line.brand || 'Genérica',
-             quantity: line.quantity,
-             unit_price: line.unit_price,
-             total_price: line.quantity * line.unit_price
+             quantity: parseFloat(line.quantity.toFixed(3)),
+             unit_price: parseFloat(line.unit_price.toFixed(2)),
+             total_price: parseFloat((line.quantity * line.unit_price).toFixed(2))
            });
          }
       });
