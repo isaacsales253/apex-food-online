@@ -21,6 +21,8 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Menu,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -88,8 +90,9 @@ function useServerStatus() {
 
   useEffect(() => {
     check();
-    const id = setInterval(check, 30_000); // every 30s
+    const id = setInterval(check, 30_000);
     return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { status, latency, lastChecked };
@@ -98,6 +101,22 @@ function useServerStatus() {
 export default function Sidebar() {
   const pathname = usePathname();
   const { status, latency, lastChecked } = useServerStatus();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Close drawer on route change (mobile)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
 
   const statusConfig = {
     checking: {
@@ -146,80 +165,135 @@ export default function Sidebar() {
   const Icon = cfg.icon;
 
   return (
-    <aside className="w-72 fixed h-[calc(100vh-48px)] m-6 z-50 flex flex-col overflow-hidden bg-[#0D1825]/90 backdrop-blur-xl border border-white/8 shadow-2xl rounded-2xl">
+    <>
+      {/* ── Mobile top header bar ───────────────────────────────────────────── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center px-4 gap-3
+                      bg-[#0D1825]/95 backdrop-blur-xl border-b border-white/8 shadow-lg">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/8 transition-colors"
+          aria-label="Abrir menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-md shadow-orange-500/30 shrink-0">
+          <ChefHat className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <h1 className="text-base font-black text-white leading-none">APEX Food</h1>
+          <p className="text-[9px] text-orange-400 font-bold uppercase tracking-widest">Sistema de Gestão</p>
+        </div>
+        {/* Status dot on mobile header */}
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className={cn("w-2 h-2 rounded-full", cfg.dot, cfg.pulse && "animate-pulse")} />
+          <span className={cn("text-[10px] font-bold hidden sm:block", cfg.text)}>{cfg.label}</span>
+        </div>
+      </div>
 
-      {/* Brand header */}
-      <div className="p-7 border-b border-white/5">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-            <ChefHat className="w-6 h-6 text-white" />
-          </div>
+      {/* ── Mobile overlay backdrop ─────────────────────────────────────────── */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar / Drawer ────────────────────────────────────────────────── */}
+      <aside className={cn(
+        "fixed z-50 flex flex-col overflow-hidden shadow-2xl",
+        "bg-[#0D1825]/95 backdrop-blur-xl border-white/8",
+        "transition-transform duration-300 ease-in-out",
+
+        // Mobile/Tablet: full-height drawer from the left
+        "top-0 left-0 h-full w-[280px] border-r rounded-none",
+
+        // Desktop: floating rounded panel with margin
+        "lg:top-6 lg:left-6 lg:h-[calc(100vh-3rem)] lg:w-72 lg:rounded-2xl lg:border",
+
+        // Visibility: slide in/out on mobile, always shown on desktop
+        isOpen ? "translate-x-0" : "-translate-x-full",
+        "lg:translate-x-0",
+      )}>
+
+        {/* Brand header */}
+        <div className="p-6 border-b border-white/5 flex items-start justify-between gap-2">
           <div>
-            <h1 className="text-xl font-black tracking-tight text-white leading-none">APEX Food</h1>
-            <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest mt-0.5">Sistema de Gestão</p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                <ChefHat className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-white leading-none">APEX Food</h1>
+                <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest mt-0.5">Sistema de Gestão</p>
+              </div>
+            </div>
+            <div className="h-0.5 w-full bg-gradient-to-r from-orange-500 via-amber-400 to-transparent rounded-full" />
           </div>
+
+          {/* Close button — mobile only */}
+          <button
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-2 rounded-xl text-slate-500 hover:text-white hover:bg-white/8 transition-colors shrink-0 mt-1"
+            aria-label="Fechar menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <div className="h-0.5 w-full bg-gradient-to-r from-orange-500 via-amber-400 to-transparent rounded-full" />
-      </div>
 
-      {/* Navigation */}
-      <nav className="px-3 flex-1 overflow-y-auto space-y-0.5 py-4 scroll-smooth">
-        {menuItems.map((item) => {
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative",
-                active
-                  ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-900/30"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
-              )}
-            >
-              {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white/60 rounded-r-full" />}
-              <item.icon className={cn(
-                "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
-                active ? "text-white" : "group-hover:text-orange-400"
-              )} />
-              <span className="font-semibold text-sm tracking-tight truncate">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
+        {/* Navigation */}
+        <nav className="px-3 flex-1 overflow-y-auto space-y-0.5 py-4 scroll-smooth
+                        [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-orange-500/15 [&::-webkit-scrollbar-thumb]:rounded-full">
+          {menuItems.map((item) => {
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative",
+                  active
+                    ? "bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-lg shadow-orange-900/30"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                )}
+              >
+                {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white/60 rounded-r-full" />}
+                <item.icon className={cn(
+                  "w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110",
+                  active ? "text-white" : "group-hover:text-orange-400"
+                )} />
+                <span className="font-semibold text-sm tracking-tight truncate">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
-      {/* Server status widget */}
-      <div className="p-4 border-t border-white/5">
-        <div className={cn(
-          "p-4 rounded-2xl border relative overflow-hidden transition-all duration-500",
-          cfg.bg
-        )}>
-          {/* Animated dot + label centered */}
-          <div className="flex flex-col items-center gap-1.5">
-            <div className="relative">
-              <div className={cn("w-2.5 h-2.5 rounded-full", cfg.dot, cfg.pulse && "animate-pulse")} />
-              {status === 'online' && (
-                <div className={cn("absolute inset-0 rounded-full animate-ping opacity-60", cfg.dot)} />
+        {/* Server status widget */}
+        <div className="p-4 border-t border-white/5">
+          <div className={cn(
+            "p-4 rounded-2xl border relative overflow-hidden transition-all duration-500",
+            cfg.bg
+          )}>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="relative">
+                <div className={cn("w-2.5 h-2.5 rounded-full", cfg.dot, cfg.pulse && "animate-pulse")} />
+                {status === 'online' && (
+                  <div className={cn("absolute inset-0 rounded-full animate-ping opacity-60", cfg.dot)} />
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Icon className={cn("w-4 h-4 shrink-0", cfg.text)} />
+                <p className={cn("text-sm font-black", cfg.text)}>{cfg.label}</p>
+              </div>
+              <p className="text-xs text-slate-400">{cfg.sub}</p>
+              {lastChecked && (
+                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                  verificado às {lastChecked.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </p>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Icon className={cn("w-4 h-4 shrink-0", cfg.text)} />
-              <p className={cn("text-sm font-black", cfg.text)}>{cfg.label}</p>
-            </div>
-            <p className="text-xs text-slate-400">{cfg.sub}</p>
-            {lastChecked && (
-              <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                verificado às {lastChecked.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </p>
-            )}
           </div>
         </div>
-      </div>
-
-      <style jsx>{`
-        nav::-webkit-scrollbar { width: 4px; }
-        nav::-webkit-scrollbar-thumb { background: rgba(249,115,22,0.15); border-radius: 10px; }
-      `}</style>
-    </aside>
+      </aside>
+    </>
   );
 }
