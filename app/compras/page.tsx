@@ -556,20 +556,26 @@ export default function ListaComprasPage() {
                                 </div>
                                 <div className="md:col-span-2">
                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Preço Un. (R$)</label>
-                                   <input 
-                                     type="text"
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     step="0.01"
                                      className="input py-2 text-sm bg-slate-900 w-full"
-                                     value={maskCurrency(line.unit_price)}
-                                     onChange={e => updateCartLine(m.id, line.id, 'unit_price', unmaskCurrency(e.target.value))}
+                                     value={line.unit_price === 0 ? '' : line.unit_price}
+                                     placeholder="0,00"
+                                     onChange={e => updateCartLine(m.id, line.id, 'unit_price', parseFloat(e.target.value) || 0)}
                                    />
                                 </div>
                                 <div className="md:col-span-2">
                                    <label className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1 block">Total (R$)</label>
-                                   <input 
-                                     type="text"
+                                   <input
+                                     type="number"
+                                     min="0"
+                                     step="0.01"
                                      className="input py-2 text-sm bg-primary/10 border-primary/30 text-primary font-bold w-full"
-                                     value={maskCurrency(line.quantity * line.unit_price)}
-                                     onChange={e => updateCartLineTotal(m.id, line.id, unmaskCurrency(e.target.value))}
+                                     value={line.quantity * line.unit_price === 0 ? '' : parseFloat((line.quantity * line.unit_price).toFixed(2))}
+                                     placeholder="0,00"
+                                     onChange={e => updateCartLineTotal(m.id, line.id, parseFloat(e.target.value) || 0)}
                                    />
                                 </div>
                                 <div className="md:col-span-1 flex justify-end pb-1 md:pb-0">
@@ -685,18 +691,21 @@ export default function ListaComprasPage() {
                             <div>
                               <label className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1 block">Preço Un. (R$)</label>
                               <input
-                                type="text"
+                                type="number"
+                                min="0"
+                                step="0.01"
                                 className="input py-2 text-sm bg-slate-900 w-full"
-                                value={maskCurrency(entry.unit_price)}
-                                onChange={e => updateDisp(d.id, 'unit_price', unmaskCurrency(e.target.value))}
+                                value={entry.unit_price === 0 ? '' : entry.unit_price}
+                                placeholder="0,00"
+                                onChange={e => updateDisp(d.id, 'unit_price', parseFloat(e.target.value) || 0)}
                               />
                             </div>
                             <div>
                               <label className="text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1 block">Total (R$)</label>
                               <input
-                                type="text"
+                                type="number"
                                 className="input py-2 text-sm bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold w-full"
-                                value={maskCurrency(entry.qty * entry.unit_price)}
+                                value={entry.qty * entry.unit_price === 0 ? '' : parseFloat((entry.qty * entry.unit_price).toFixed(2))}
                                 readOnly
                               />
                             </div>
