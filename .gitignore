@@ -1,0 +1,8 @@
+node_modules/
+.next/
+database.sqlite
+.env.local
+*.sqlite
+public/uploads/*
+!public/uploads/.gitkeep
+scripts/

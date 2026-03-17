@@ -1,0 +1,15 @@
+﻿Table raw_material_stock_by_brand might not exist or error: no such column: session_id
+Foreign keys for expenses: [
+  {
+    id: 0,
+    seq: 0,
+    table: 'shopping_sessions',
+    from: 'shopping_session_id',
+    to: 'id',
+    on_update: 'NO ACTION',
+    on_delete: 'NO ACTION',
+    match: 'NONE'
+  }
+]
+Tables referencing expenses: []
+Tables referencing shopping_sessions: [ 'expenses', 'shopping_session_items' ]
