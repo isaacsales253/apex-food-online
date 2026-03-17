@@ -151,7 +151,7 @@ export default function ComprasPage() {
         return { name: ing.name, deductPurchase, purchase_unit: mat?.purchase_unit || '', currentStock, insufficient };
       })
     : [];
-  const hasInsufficient = previewDeductions.some(d => d.insufficient);
+  const hasInsufficient = previewDeductions.some((d: { insufficient: boolean }) => d.insufficient);
 
   const openHistory = async (m: Material) => {
     setHistoryMaterial(m);
@@ -957,7 +957,7 @@ export default function ComprasPage() {
                         )}
                       </div>
                       <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                        {previewDeductions.map((d, i) => (
+                        {previewDeductions.map((d: { name: string; deductPurchase: number; purchase_unit: string; currentStock: number; insufficient: boolean }, i: number) => (
                           <div key={i} className={`flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm ${d.insufficient ? 'bg-rose-500/10 border-rose-500/30' : 'bg-white/5 border-white/10'}`}>
                             <div className="flex items-center gap-2">
                               {d.insufficient && <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
