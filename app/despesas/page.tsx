@@ -363,7 +363,7 @@ export default function DespesasPage() {
       const initial: Record<number, { quantity: string; unit_price: string }> = {};
       data.forEach(item => {
         initial[item.id] = {
-          quantity: item.quantity.toString(),
+          quantity: parseFloat(item.quantity.toFixed(3)).toString(),
           unit_price: maskCurrency(item.unit_price),
         };
       });
@@ -396,7 +396,7 @@ export default function DespesasPage() {
     if (!entry) return 0;
     const qty = parseFloat(entry.quantity) || 0;
     const price = unmaskCurrency(entry.unit_price);
-    return qty * price;
+    return parseFloat((qty * price).toFixed(2));
   };
 
   const itensGrandTotal = () =>
@@ -555,15 +555,15 @@ export default function DespesasPage() {
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="glass-panel p-7 border-l-4 border-l-rose-500/50 bg-rose-500/5">
           <h3 className="text-xs font-black text-muted uppercase tracking-[0.2em] mb-3">Total do Período</h3>
-          <p className="text-4xl font-black text-rose-400">R$ {totalMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-4xl font-black text-rose-400">R$ {totalMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div className="glass-panel p-7 border-l-4 border-l-emerald-500/50 bg-emerald-500/5">
           <h3 className="text-xs font-black text-muted uppercase tracking-[0.2em] mb-3">Pago</h3>
-          <p className="text-4xl font-black text-emerald-400">R$ {totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-4xl font-black text-emerald-400">R$ {totalPaid.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <div className="glass-panel p-7 border-l-4 border-l-amber-500/50 bg-amber-500/5">
           <h3 className="text-xs font-black text-muted uppercase tracking-[0.2em] mb-3">Pendente</h3>
-          <p className="text-4xl font-black text-amber-400">R$ {totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          <p className="text-4xl font-black text-amber-400">R$ {totalPending.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
         <button
           onClick={() => totalOverdue > 0 && setShowOnlyOverdue(v => !v)}
@@ -575,7 +575,7 @@ export default function DespesasPage() {
             {totalOverdue > 0 && <span className="ml-auto text-[9px] text-red-400/60 normal-case font-bold">{showOnlyOverdue ? '▲ filtrado' : 'clique p/ filtrar'}</span>}
           </h3>
           <p className={cn("text-4xl font-black", totalOverdue > 0 ? "text-red-400" : "text-slate-500")}>
-            R$ {totalOverdue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {totalOverdue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
           {totalOverdue > 0 && (
             <p className="text-[10px] text-red-400/70 font-bold mt-2">
@@ -871,7 +871,7 @@ export default function DespesasPage() {
                                       />
                                     </td>
                                     <td className="py-1.5 px-3 text-right font-black text-sky-300">
-                                      R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                      R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </td>
                                   </tr>
                                 );
@@ -881,7 +881,7 @@ export default function DespesasPage() {
                               <tr className="bg-white/5 border-t border-white/10">
                                 <td colSpan={2} className="py-2.5 px-3 text-xs font-black text-muted uppercase tracking-wider">Total</td>
                                 <td className="py-2.5 px-3 text-right font-black text-white">
-                                  R$ {(unmaskCurrency(form.value) * (parseInt(parcelasCount) || 2)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  R$ {(unmaskCurrency(form.value) * (parseInt(parcelasCount) || 2)).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </td>
                               </tr>
                             </tfoot>
@@ -1026,7 +1026,7 @@ export default function DespesasPage() {
 
                   {/* Value */}
                   <p className={cn("text-xl font-black shrink-0", exp.paid ? "text-slate-500" : "text-rose-400")}>
-                    R$ {exp.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {exp.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
 
                   {/* Actions */}
@@ -1199,7 +1199,7 @@ export default function DespesasPage() {
                               </div>
                               <div className="col-span-2 text-right">
                                 <p className="text-sm font-bold text-orange-400">
-                                  R$ {itemTotal(item.id).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  R$ {itemTotal(item.id).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </p>
                               </div>
                             </div>
@@ -1210,7 +1210,7 @@ export default function DespesasPage() {
                         <div className="flex justify-between items-center pt-3 mt-3 border-t border-white/10 px-3">
                           <span className="text-sm font-black uppercase tracking-wider text-muted">Total da Compra</span>
                           <span className="text-xl font-black text-white">
-                            R$ {itensGrandTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            R$ {itensGrandTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                         </div>
 
